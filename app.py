@@ -1,19 +1,23 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template, Response
 import redis
 # from sklearn.externals import joblib as pickle
-import cPickle as pickle
+import cPickle as pickle  # 
 import uuid
 import os
 import pandas as pd
 import uuid as uuid_
+import sqlite3
+import json
+from datetime import datetime
+from functools import wraps
 
+
+# TODO
+# need to get data as JSON and not form data in upload
 
 app = Flask(__name__)
+db_path = 'db/models.sqlite'
 
-# TODOs
-# 1- add a dropzone UI to drag and drop pickled models
-# 2- get a list of all models (in redis and on disk)
-# 3- Log usage of models
 
 def redis_server_connection():
 	return redis.StrictRedis(host='localhost', port=6379, db=0)
@@ -21,11 +25,48 @@ def redis_server_connection():
 
 @app.route('/', methods=['GET'])
 def root():
-	return jsonify({'status': 'ok'})
+	return render_template('index.html')
 
 
-@app.route('/upload', methods=['POST'])
+@app.route('/models', methods=['GET'])
+def models():
+	conn = sqlite3.connect(db_path)
+	models = pd.read_sql_query('select * from models', conn).sort_values(by='timestamp', ascending=False)
+	return jsonify({'status': 'ok', 'data': json.loads(models.to_json(orient='records'))})
+
+
+def check_auth(username, password):
+    """This function is called to check if a username /
+    password combination is valid.
+    """
+    return username == 'menrva' and password == 'menrva'
+
+
+def authenticate():
+    """Sends a 401 response that enables basic auth"""
+    return Response(
+            'Could not verify your access level for that URL.\n'
+            'You have to login with proper credentials', 401,
+            {'WWW-Authenticate': 'Basic realm="Login Required"'})
+
+
+def requires_auth(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        auth = request.authorization
+        if not auth or not check_auth(auth.username, auth.password):
+            return authenticate()
+        return f(*args, **kwargs)
+
+    return decorated
+
+
+@app.route('/upload', methods=['POST', 'GET'])
+@requires_auth
 def upload():
+	if request.method == 'GET':
+		return render_template('upload.html')
+
 	file_uploaded = request.files['file']
 
 	# find a unique uuid
@@ -41,7 +82,18 @@ def upload():
 	file_uploaded.save(path)  # save to disk
 	print '%s: saved to disk' % uuid
 	redis_server = redis_server_connection()
-	print file_uploaded.read()
+
+	# save to database
+	json_ = dict(request.form)
+	print json_
+	conn = sqlite3.connect(db_path)
+	cursor = conn.cursor()
+	row = str(uuid), json_['name'][1], json_['description'][1], json_['link'][1], json_['input'][1], json_['output'][1], datetime.now()
+	print row
+	cursor.execute("insert into models values (?, ?, ?, ?, ?, ?, ?)", row)
+	conn.commit()
+
+	# print file_uploaded.read()
 	# TODO: reading back from disk, couldn't get file_uploaded.read() working, produced ''
 	redis_server.set(uuid, open(path).read())
 	print '%s: saved to memory (redis)' % uuid
@@ -55,7 +107,8 @@ def predict(uuid):
 	
 	# load the model into memory
 	if redis_server.exists(uuid):
-		print redis_server.get(uuid)
+		# print redis_server.get(uuid)
+		print 'Loading from redis'
 		model = pickle.loads(redis_server.get(uuid))
 
 	else:
@@ -83,4 +136,4 @@ def predict(uuid):
 
 
 if __name__ == '__main__':
-	app.run(host='0.0.0.0', debug=True)
+	app.run(host='0.0.0.0', debug=True, port=80)
