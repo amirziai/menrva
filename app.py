@@ -15,6 +15,10 @@ from functools import wraps
 # TODO
 # need to get data as JSON and not form data in upload
 
+# sqlite database
+# create table models (id text primary key, name text, description text, input text, output text, link text, timestamp datetime);
+# redis flushall removes all keys
+
 app = Flask(__name__)
 db_path = 'db/models.sqlite'
 
@@ -88,7 +92,7 @@ def upload():
 	print json_
 	conn = sqlite3.connect(db_path)
 	cursor = conn.cursor()
-	row = str(uuid), json_['name'][1], json_['description'][1], json_['link'][1], json_['input'][1], json_['output'][1], datetime.now()
+	row = str(uuid), json_['name'][1], json_['description'][1], json_['input'][1], json_['output'][1], json_['link'][1], datetime.now()
 	print row
 	cursor.execute("insert into models values (?, ?, ?, ?, ?, ?, ?)", row)
 	conn.commit()
