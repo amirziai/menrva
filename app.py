@@ -136,7 +136,7 @@ def predict(uuid):
 	except Exception, e:
 		print 'error'
 		print e
-		return jsonify({'status': 'error', 'message': 'model prediction failed'})
+		return jsonify({'status': 'error', 'message': 'model prediction failed', 'error': e})
 
 
 if __name__ == '__main__':
