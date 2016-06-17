@@ -19,6 +19,7 @@ Persists new models to disk and then uses Redis to serve models from memory. Log
 1. Numpy
 2. Pandas
 3. Scikit-learn
+4. Keras
 
 ### Installation (ubuntu)
 1. Anaconda

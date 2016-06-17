@@ -338,8 +338,9 @@ def clf_scores(clf, x_train, y_train, x_test, y_test):
 
     # TODO: extend this to a confusion matrix per fold for more flexibility downstream (tuning)
     # TODO: calculate a set of ROC curves per fold instead of running it on test, currently introducing bias
-    y_test_predicted = clf.predict(x_test)
     scores = cross_val_score(clf, x_train, y_train, cv=cv, n_jobs=-1)
+    clf.fit(x_train, y_train)
+    y_test_predicted = clf.predict(x_test)
     info['accuracy'] = min(scores)
     info['accuracy_test'] = accuracy_score(y_test, y_test_predicted)
     info['accuracy_folds'] = scores

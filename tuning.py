@@ -11,7 +11,7 @@ from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 # more information about sklearn's incremental models
 # http://scikit-learn.org/stable/auto_examples/linear_model/plot_sgd_comparison.html
 # http://scikit-learn.org/stable/modules/scaling_strategies.html
-# TODO add xgboost
+# TODO add xgboost, keras
 # TODO add other models
 models_linear = [Perceptron, LogisticRegression, BayesianRidge, LinearSVC]
 models_online = [Perceptron, MultinomialNB, SGDClassifier, PassiveAggressiveClassifier]
@@ -57,6 +57,7 @@ def tune(insights, x_train, x_test, y_train, y_test, models='all', requirements=
     elif models_to_train == 'cheap':
         models_to_train += models_linear + models_nonlinear_cheap
 
+    # TODO: different cases: 1- break out when req met 2- run through all, try ensembles (if expensive allowed), 3- GPU?
     for model in models_to_train:
         # TODO: add the looping logic
         pass
