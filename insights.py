@@ -1,3 +1,5 @@
+from time import time
+
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -7,7 +9,6 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeRegressor, DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import roc_curve, auc, confusion_matrix, accuracy_score
-
 
 random_state = 0
 cv = 5  # number of folds for cross validation
@@ -339,8 +340,11 @@ def clf_scores(clf, x_train, y_train, x_test, y_test):
     # TODO: extend this to a confusion matrix per fold for more flexibility downstream (tuning)
     # TODO: calculate a set of ROC curves per fold instead of running it on test, currently introducing bias
     scores = cross_val_score(clf, x_train, y_train, cv=cv, n_jobs=-1)
+    runtime = time()
     clf.fit(x_train, y_train)
+    runtime = time() - runtime
     y_test_predicted = clf.predict(x_test)
+    info['runtime'] = runtime
     info['accuracy'] = min(scores)
     info['accuracy_test'] = accuracy_score(y_test, y_test_predicted)
     info['accuracy_folds'] = scores
@@ -375,7 +379,10 @@ def generate_insights(scores):
 
     metric_distribution = {k: scores[k]['accuracy_folds'] for k in scores.keys()}
     pd.DataFrame(metric_distribution).boxplot(return_type='dict');
+    plt.show()
 
+    print 'Training time'
+    pd.Series({k:scores[k]['runtime'] for k in scores}).plot(kind='bar');
 
 def fit_vanilla(x_train, x_test, y_train, y_test):
     scores = dict()

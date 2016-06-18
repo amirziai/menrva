@@ -18,6 +18,20 @@ models_online = [Perceptron, MultinomialNB, SGDClassifier, PassiveAggressiveClas
 models_nonlinear_cheap = [DecisionTreeClassifier]
 models_nonlinear_expensive = [RandomForestClassifier, SVC, GradientBoostingClassifier]
 
+hyperparameters = {
+    LogisticRegression: [
+  {'C': [1, 10, 100, 1000], 'kernel': ['linear']},
+  {'C': [1, 10, 100, 1000], 'gamma': [0.001, 0.0001], 'kernel': ['rbf']},
+ ],
+    RandomForestClassifier: {"max_depth": [3, None],
+              "max_features": [1, 3, 10],
+              "min_samples_split": [1, 3, 10],
+              "min_samples_leaf": [1, 3, 10],
+              "bootstrap": [True, False],
+              "criterion": ["gini", "entropy"]},
+    
+}
+
 
 def requirements_bare_minimum(y_train):
     # model has to beat:
@@ -30,7 +44,7 @@ def requirements_bare_minimum(y_train):
             'accuracy_std': 0.1}
 
 
-def tune(insights, x_train, x_test, y_train, y_test, models='all', requirements=None):
+def tune(insights, x_train, x_test, y_train, y_test, models='all', requirements=None, maximize=False):
     if requirements is not None:
         requirements = requirements_bare_minimum(y_train)
 
@@ -57,9 +71,9 @@ def tune(insights, x_train, x_test, y_train, y_test, models='all', requirements=
     elif models_to_train == 'cheap':
         models_to_train += models_linear + models_nonlinear_cheap
 
-    # TODO: different cases: 1- break out when req met 2- run through all, try ensembles (if expensive allowed), 3- GPU?
     for model in models_to_train:
         # TODO: add the looping logic
+        
         pass
 
     return None
