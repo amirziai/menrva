@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify, render_template, Response
 import redis
 # from sklearn.externals import joblib as pickle
-import cPickle as pickle  # 
+import _pickle as cPickle
 import uuid
 import os
 import pandas as pd
@@ -84,23 +84,23 @@ def upload():
 
 
 	file_uploaded.save(path)  # save to disk
-	print '%s: saved to disk' % uuid
+	print ('%s: saved to disk') % uuid
 	redis_server = redis_server_connection()
 
 	# save to database
 	json_ = dict(request.form)
-	print json_
+	print (json_)
 	conn = sqlite3.connect(db_path)
 	cursor = conn.cursor()
 	row = str(uuid), json_['name'][1], json_['description'][1], json_['input'][1], json_['output'][1], json_['link'][1], datetime.now()
-	print row
+	print (row)
 	cursor.execute("insert into models values (?, ?, ?, ?, ?, ?, ?)", row)
 	conn.commit()
 
 	# print file_uploaded.read()
 	# TODO: reading back from disk, couldn't get file_uploaded.read() working, produced ''
 	redis_server.set(uuid, open(path).read())
-	print '%s: saved to memory (redis)' % uuid
+	print ('%s: saved to memory (redis)') % uuid
 
 	return jsonify({'status': 'ok', 'message': 'model was uploaded', 'uuid': uuid})
 
@@ -108,22 +108,22 @@ def upload():
 @app.route('/predict/<uuid>', methods=['POST'])
 def predict(uuid):
 	redis_server = redis_server_connection()
-	
+
 	# load the model into memory
 	if redis_server.exists(uuid):
 		# print redis_server.get(uuid)
-		print 'Loading from redis'
+		print ('Loading from redis')
 		model = pickle.loads(redis_server.get(uuid))
 
 	else:
-		print '%s: not found in memory' % uuid
+		print ('%s: not found in memory') % uuid
 		path = 'models/%s' % uuid
 
 		if not os.path.exists(path):
-			print '%s: does not exist on disk (ERROR)' % uuid
+			print ('%s: does not exist on disk (ERROR)') % uuid
 			return jsonify({'status': 'error', 'message': 'model does not exist'})
 		else:
-			print '%s: serialized to memory (redis)' % uuid 
+			print ('%s: serialized to memory (redis)') % uuid
 			model = pickle.loads(path)
 			redis_server.set(uuid, open(path))  # serialize to memory
 
@@ -133,9 +133,9 @@ def predict(uuid):
 		query = pd.DataFrame([json_])
 		return jsonify({'prediction': list(model.predict(query))})
 
-	except Exception, e:
-		print 'error'
-		print e
+	except getopt.GetoptError as e:
+		print ('error')
+		print (e)
 		return jsonify({'status': 'error', 'message': 'model prediction failed', 'error': e})
 
 
